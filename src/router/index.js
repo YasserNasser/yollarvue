@@ -1,14 +1,14 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Home from "../views/Home.vue";
+import Boards from "../components/Boards.vue";
 
 Vue.use(VueRouter);
 
 const routes = [
   {
     path: "/",
-    name: "Home",
-    component: Home
+    name: "Boards",
+    component: Boards
   },
   {
     path: "/about",
@@ -18,7 +18,36 @@ const routes = [
     // which is lazy-loaded when the route is visited.
     component: () =>
       import(/* webpackChunkName: "about" */ "../views/About.vue")
+  },
+  {
+    path: "/register",
+    name: "Register",
+    
+    component: () =>
+      import("../components/Register.vue")
+  },
+  {
+    path: "/login",
+    name: "Login",
+    
+    component: () =>
+      import("../components/Login.vue")
+  },
+  {
+    path: "/logout",
+    name: "Logout",
+    
+    component: () =>
+      import("../components/Logout.vue")
+  },
+  {
+    path: '/boards/:id',
+    name: 'SingleBoard',
+    
+    component: () =>
+      import("../components/SingleBoard.vue")
   }
+
 ];
 
 const router = new VueRouter({
