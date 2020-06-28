@@ -9,7 +9,7 @@
           <v-list-item  >
             
               <v-list-item-content style="border-radius:5px" class="white" >
-                <v-list-item-title  v-text="comment.description"></v-list-item-title>
+                <v-list-item-title  v-html="comment.description"></v-list-item-title>
                 <v-list-item-subtitle class="text--primary" >{{newCard.user_name}} | Updated: {{comment.updated_at | formatDate}}</v-list-item-subtitle>
               </v-list-item-content>
                   
@@ -28,10 +28,7 @@
                   <v-icon @click="deleteComment(comment.id)">mdi-delete</v-icon>
                 </v-btn>
               </v-expand-transition>
-      <v-divider
-            v-if="comment.id + 1 < cardComments.length"
-            :key="comment.id"
-          ></v-divider>
+      
           </v-list-item >
           
           </v-layout>
@@ -52,7 +49,7 @@
                           class="headline grey lighten-2"
                           primary-title 
                         >
-                        <v-text-field @click.stop   v-model="newComment.description"  v-if="newComment.id==editCommentId" @keyup.enter="updateComment(newComment.id,newComment.description)"></v-text-field>
+                        <v-text-field  @click.stop  v-model="commentData.description"   v-if="newComment.id==editCommentId" @keyup.enter="updateComment(newComment.id,commentData.description)"></v-text-field >
                          <v-list-item-title  v-text="newComment.description" v-if="newComment.id!=editCommentId" @click.stop="editCommentId = newComment.id"></v-list-item-title>
                         </v-card-title>
 
@@ -62,24 +59,24 @@
                          <v-divider></v-divider>
 
                        <v-list-item-subtitle class="text--primary" >{{newComment.user_name}} | {{newComment.updated_at | formatDate}}</v-list-item-subtitle>
-                        <v-list-item-subtitle class="text--primary" >Description: {{newComment.description}}</v-list-item-subtitle>
+                        <v-list-item-subtitle class="text--primary" v-html="newComment.description" >Description: </v-list-item-subtitle>
                        <!--<v-list-item-subtitle class="text--primary" >Updated: {{newCard.updated_at | formatDate}}</v-list-item-subtitle>
                        <v-list-item-subtitle class="text--primary" >Updated: {{newCard.updated_at | formatDate}}</v-list-item-subtitle> -->
                        
-                       <ckeditor  :editor="editor" v-model="editorData" :config="editorConfig"></ckeditor>
+                       <!-- <ckeditor  :editor="editor" v-model="editorData" :config="editorConfig"></ckeditor> -->
                         </v-card-text>
 
                         <v-divider></v-divider>
-                            <v-flex class="white" md="auto"   @keyup.esc="editCommentId=null">
+                            <!-- <v-flex class="white"  @click.stop md="auto"   @keyup.esc="editCommentId=null">
                               <v-card @keyup.esc="editCommentId=null" shaped raised>
                                 <v-card-title class="white" >
-                                <v-text-field @click.stop   v-model="commentData.description" label="Enter Comment Name" v-if="newCard.id==storeCommentId" @keyup.enter="storeComment(newCard.id)"></v-text-field>
+                                <v-text-field   @click.stop :editor="editor" v-model="editorData" :config="editorConfig" label="Enter Comment Name" v-if="newCard.id==storeCommentId" @keyup.enter="storeComment(newCard.id)"></v-text-field >
                                 <v-btn text small class="white lighten-2" @click.stop="storeCommentId = newCard.id" v-if="newCard.id!=storeCommentId"><v-icon>mdi-plus-circle</v-icon> Add Note</v-btn>
                                 <v-btn text small rounded class="green lighten-2 ma-2" @click="storeComment(newCard.id)" v-if="newCard.id==storeCommentId">Save Note</v-btn>
                           
                                 </v-card-title>
                               </v-card>
-                            </v-flex>
+                            </v-flex> -->
                         <v-card-actions>
                           <v-spacer></v-spacer>
                           <v-btn
@@ -95,12 +92,12 @@
                   </div>
           
         <!-- </draggable> -->
-          <v-flex class="white" md="auto"   @keyup.esc="editCommentId=null">
+          <v-flex class="white"  @click.stop md="auto"   @keyup.esc="editCommentId=null">
                 <v-card @keyup.esc="editCommentId=null" shaped raised>
                   <v-card-title class="white" >
-                  <v-text-field @click.stop   v-model="commentData.description" label="Enter Comment " v-if="newCard.id==storeCommentId" @keyup.enter="storeComment(newCard.id)"></v-text-field>
+                  <ckeditor  @click.stop :editor="editor" v-model="editorData" :config="editorConfig" label="Enter Comment " v-if="newCard.id==storeCommentId" @keyup.enter="storeComment(newCard.id)"></ckeditor>
                   <v-btn text small class="white lighten-2" @click.stop="storeCommentId = newCard.id" v-if="newCard.id!=storeCommentId"><v-icon>mdi-plus-circle</v-icon> Add Comment</v-btn>
-                  <v-btn text small rounded class="green lighten-2 ma-2" @click="storeComment(newCard.id)" v-if="newCard.id==storeCommentId">Save Comment</v-btn>
+                  <v-btn text small rounded class="green lighten-2 ma-2" @click.stop="storeComment(newCard.id)" v-if="newCard.id==storeCommentId">Save Comment</v-btn>
             
                   </v-card-title>
                 </v-card>
@@ -141,7 +138,7 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
       cardId:'',
       newComment:'',
       editor: Classic,
-                editorData: '<p>Content of the editor.</p>',
+                editorData: '',
                 editorConfig: {
                     // The configuration of the editor.
                     
@@ -220,8 +217,9 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
           let token = localStorage.getItem('token');
          this.$axios.defaults.baseURL = this.$baseUrl;
            // axios.defaults.headers.common['Authorization'] =token;
-          this.$axios.post('/card/'+this.newCard.id+'/comment?api_token='+token,{description:this.commentData.description})
+          this.$axios.post('/card/'+this.newCard.id+'/comment?api_token='+token,{description:this.editorData})
           .then((response)=>{
+            this.editorData='';
                 let newComment = response.data.comment;
                 //console.log(newComment);
                 if(!this.comments){

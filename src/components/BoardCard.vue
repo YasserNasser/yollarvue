@@ -1,8 +1,8 @@
 
 <template >
 <v-container grid-list-md fluid @click="editCardId=null;storeCardId=null" >
-    <draggable v-model="cards" group="cards" @start="drag=true" @end="drag=false" @add="onAdd" tag="ul" style="min-height:15px" :listId="list.id"  @change="onChange">  
-  <li v-for="card in cards" :key="card.id" :cardId="card.id" v-bind:listId="list.id" >
+    <draggable v-model="cards" group="cards" @start="drag=true" @end="drag=false" @add="onAdd" tag="ul" style="min-height:15px" :listId="list.id"  >  
+  <li v-for="(card, index) in cards" :key="card.id" :cardId="card.id" v-bind:listId="list.id" >
     <v-hover v-slot:default="{ hover }">
     <v-layout row >
       
@@ -25,19 +25,19 @@
                       
               <v-expand-transition>
                <v-btn icon v-if="hover">
-                  <v-icon @click="deleteCard(card.id)">mdi-delete</v-icon>
+                  <v-icon @click="deleteCard(card.id,index)">mdi-delete</v-icon>
                 </v-btn>
               </v-expand-transition>
-      <v-divider
+      <!-- <v-divider
             v-if="card.id + 1 < cards.length"
             :key="card.id"
-          ></v-divider>
+          ></v-divider> -->
           </v-list-item >
           
           </v-layout>
           </v-hover >
           
-  </li>
+  <!-- </li> -->
          
           <div class="text-center" >
                     <v-dialog
@@ -52,7 +52,7 @@
                           class="headline grey lighten-2"
                           primary-title 
                         >
-                        <v-text-field @click.stop   v-model="newCard.name"  v-if="newCard.id==editCardId" @keyup.enter="updateCard(newCard.id,newCard.name)"></v-text-field>
+                        <v-text-field @click.stop   v-model="newCard.name"  v-if="newCard.id==editCardId" @keyup.enter="updateCard(newCard.id,newCard.name,index)"></v-text-field>
                          <v-list-item-title  v-text="newCard.name" v-if="newCard.id!=editCardId" @click.stop="editCardId = newCard.id"></v-list-item-title>
                         </v-card-title>
 
@@ -62,15 +62,15 @@
                          <v-divider></v-divider>
 
                        <v-list-item-subtitle class="text--primary" >{{newCard.user_name}} | {{newCard.updated_at | formatDate}}</v-list-item-subtitle>
-                        <v-list-item-subtitle class="text--primary" >Description: {{newCard.description}}</v-list-item-subtitle>
+                        <v-list-item-subtitle class="text--primary" v-html="newCard.description" >Description: </v-list-item-subtitle>
                        <!--<v-list-item-subtitle class="text--primary" >Updated: {{newCard.updated_at | formatDate}}</v-list-item-subtitle>
                        <v-list-item-subtitle class="text--primary" >Updated: {{newCard.updated_at | formatDate}}</v-list-item-subtitle> -->
                        <card-comment :newCard="newCard" :key="newCard.id" :cardComments="cardComments"></card-comment>
-                       <ckeditor  :editor="editor" v-model="editorData" :config="editorConfig"></ckeditor>
+                       <!-- <ckeditor  :editor="editor" v-model="editorData" :config="editorConfig"></ckeditor> -->
                         </v-card-text>
 
                         <v-divider></v-divider>
-                            <v-flex class="white" md="auto"   @keyup.esc="editCardId=null">
+                            <!-- <v-flex class="white" md="auto"   @keyup.esc="editCardId=null">
                               <v-card @keyup.esc="editCardId=null" shaped raised>
                                 <v-card-title class="white" >
                                 <v-text-field @click.stop   v-model="cardData.name" label="Enter Card Name" v-if="list.id==storeCardId" @keyup.enter="storeCard(list.id)"></v-text-field>
@@ -79,7 +79,7 @@
                           
                                 </v-card-title>
                               </v-card>
-                            </v-flex>
+                            </v-flex> -->
                         <v-card-actions>
                           <v-spacer></v-spacer>
                           <v-btn
@@ -93,7 +93,7 @@
                       </v-card>
                     </v-dialog>
                   </div>
-          
+           </li>
         </draggable>
           <v-flex class="white" md="auto"   @keyup.esc="editCardId=null">
                 <v-card @keyup.esc="editCardId=null" shaped raised>
@@ -141,7 +141,7 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
       listId:'',
       newCard:'',
       editor: Classic,
-                editorData: '<p>Content of the editor.</p>',
+                editorData: '',
                 editorConfig: {
                     // The configuration of the editor.
                     
@@ -153,6 +153,8 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
             if(board.id == this.boardId){
               this.board = board;
               this.cardComments = board.lists.card.comments;
+              this.cards = board.lists.cards;
+              console.log('cards after getlists : ', this.cards);
               return this.lists = board.lists;
             }
             
@@ -169,10 +171,8 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
              });
         },
         showCard(cardId){
-          //this.storeCardId = listId;
           let token = localStorage.getItem('token');
          this.$axios.defaults.baseURL = this.$baseUrl;
-           // axios.defaults.headers.common['Authorization'] =token;
           this.$axios.get('/card/'+cardId+'?api_token='+token)
           .then((response)=>{
                 let newCard = response.data.card;
@@ -183,10 +183,6 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
                   this.cards=[];
                   }
                 this.fetchBoardData();
-                // this.cards.push(newCard);
-                // this.$toast.success('Card Added Successfully.', {
-                //   position: 'top-right'
-                // });
                            this.cardData.name= ''; 
                            this.storeCardId ='';
                            this.editCardId=null;
@@ -200,11 +196,9 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
           this.storeCardId = listId;
           let token = localStorage.getItem('token');
          this.$axios.defaults.baseURL = this.$baseUrl;
-           // axios.defaults.headers.common['Authorization'] =token;
           this.$axios.post('/boards/'+this.list.board_id+'/list/'+this.list.id+'/card?api_token='+token,{name:this.cardData.name})
           .then((response)=>{
                 let newCard = response.data.card;
-                //console.log(newCard);
                 if(!this.cards){
                   this.cards=[];
                   }
@@ -222,17 +216,14 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
           }); 
         },
         onAdd(evt){
-          //console.log(evt.item,evt.to.getElementsByTagName("li")[0].getAttribute('listId'));
-         //let fromListId = evt.item.getAttribute('listId');
           let cardId = evt.item.getAttribute('cardId');
           let toListId = evt.to.getElementsByTagName("li")[0].getAttribute('listId');
-          //console.log(cardId,toListId,fromListId);
-          this.updateCard(cardId,toListId);
+          this.moveCard(cardId,toListId);
         },
-        updateCard(cardId,newName){
+        moveCard(cardId,newlist_id){
           let token = localStorage.getItem('token');
          this.$axios.defaults.baseURL = this.$baseUrl;
-          this.$axios.put('/card/'+cardId+'?api_token='+token,{name:newName})
+          this.$axios.put('/card/'+cardId+'/list/'+newlist_id+'?api_token='+token,{list_id:newlist_id})
           .then(()=>{
             this.$toast.success('Card Updated Successfully.', {
                   position: 'top-right'
@@ -247,43 +238,68 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
                 }); 
           });
         },
-        deleteCard(cardId){
+        updateCard(cardId,newName,index){
+          let token = localStorage.getItem('token');
+         this.$axios.defaults.baseURL = this.$baseUrl;
+          this.$axios.put('/card/'+cardId+'?api_token='+token,{name:newName})
+          .then((response)=>{
+            this.$toast.success('Card Updated Successfully.', {
+                  position: 'top-right'
+                });
+                this.updateId = null;
+                this.cards.splice(index,1);
+                this.cards.push(response.data.card);
+                           this.listName= ''; 
+                           this.editCardId=null;
+          }).catch((error)=>{
+              this.$toast.error('some error happend.'+error, {
+                  position: 'top-right'
+                }); 
+          });
+        },
+        deleteCard(cardId,index){
           let token = localStorage.getItem('token');
          this.$axios.defaults.baseURL = this.$baseUrl;
           this.$axios.delete('/card/'+cardId+'?api_token='+token)
           .then(()=>{
+                if(!this.cards){
+                  this.cards=[];
+                  }
+                this.fetchBoardData();
+                this.cards = this.list.cards;
+                this.cards.splice(index,1);
             this.$toast.success('Card Deleted Successfully.', {
                   position: 'top-right'
                 });
-                this.fetchBoardData();
-                this.cards = this.list.cards;
+                
+                
           }).catch((error)=>{
               this.$toast.error('some error happend.'+error, {
                   position: 'top-right'
                 }); 
           });
         },
-        onChange(){
-           //console.log(evt.moved.oldIndex,evt.moved.newIndex);
-           let newCards = this.cards.map((card,index)=>{
-             card.priority = index+1;
-             return card;
-           });
-             let token = localStorage.getItem('token');
-         this.$axios.defaults.baseURL = this.$baseUrl;
-          this.$axios.patch('/card/update-all?api_token='+token,{cards:newCards})
-          .then(()=>{
-            this.$toast.success('Cards Updated Successfully.', {
-                  position: 'top-right'
-                });
-                //this.fetchBoardData();
-                //this.cards = this.list.cards;
-          }).catch((error)=>{
-              this.$toast.error('some error happend.'+error, {
-                  position: 'top-right'
-                }); 
-          });
-        },
+        // onChange(){
+        //    //console.log(evt.moved.oldIndex,evt.moved.newIndex);
+        //   //  let newCards = this.cards.map((card,index)=>{
+        //   //    card.priority = index+1;
+        //   //    return card;
+        //   //  });
+        //      let token = localStorage.getItem('token');
+        //  this.$axios.defaults.baseURL = this.$baseUrl;
+        //   this.$axios.patch('/card/update-all?api_token='+token,{cards:newCards})
+        //   .then(()=>{
+        //     this.$toast.success('Cards Updated Successfully.', {
+        //           position: 'top-right'
+        //         });
+        //         //this.fetchBoardData();
+        //         //this.cards = this.list.cards;
+        //   }).catch((error)=>{
+        //       this.$toast.error('some error happend.'+error, {
+        //           position: 'top-right'
+        //         }); 
+        //   });
+        // },
     },
     created (){
       this.cards = this.list.cards;
