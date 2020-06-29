@@ -2,7 +2,7 @@
 <template >
 <v-container grid-list-md fluid @click="editCommentId=null;storeCommentId=null" >
     <!-- <draggable v-model="comments" group="comments" @start="drag=true" @end="drag=false" @add="onAdd" tag="ul" style="min-height:15px" :commentId="comment.id"  @change="onChange">   -->
-  <li v-for="comment in cardComments" :key="comment.id" :commentId="comment.id" v-bind:cardId="newCard.id" >
+  <li v-for="(comment, index) in cardComments" :key="comment.id" :commentId="comment.id" v-bind:cardId="newCard.id" >
     <v-hover v-slot:default="{ hover }">
     <v-layout row >
       
@@ -25,7 +25,7 @@
                       
               <v-expand-transition>
                <v-btn icon v-if="hover">
-                  <v-icon @click="deleteComment(comment.id)">mdi-delete</v-icon>
+                  <v-icon @click="deleteComment(comment.id,index)">mdi-delete</v-icon>
                 </v-btn>
               </v-expand-transition>
       
@@ -34,7 +34,7 @@
           </v-layout>
           </v-hover >
           
-  </li>
+  
          
           <div class="text-center" >
                     <v-dialog
@@ -49,7 +49,7 @@
                           class="headline grey lighten-2"
                           primary-title 
                         >
-                        <v-text-field  @click.stop  v-model="commentData.description"   v-if="newComment.id==editCommentId" @keyup.enter="updateComment(newComment.id,commentData.description)"></v-text-field >
+                        <v-text-field  @click.stop  v-model="commentData.description"   v-if="newComment.id==editCommentId" @keyup.enter="updateComment(newComment.id,commentData.description,index)"></v-text-field >
                          <v-list-item-title  v-text="newComment.description" v-if="newComment.id!=editCommentId" @click.stop="editCommentId = newComment.id"></v-list-item-title>
                         </v-card-title>
 
@@ -90,7 +90,7 @@
                       </v-card>
                     </v-dialog>
                   </div>
-          
+          </li>
         <!-- </draggable> -->
           <v-flex class="white"  @click.stop md="auto"   @keyup.esc="editCommentId=null">
                 <v-card @keyup.esc="editCommentId=null" shaped raised>
@@ -246,16 +246,18 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
           //console.log(cardId,toListId,fromListId);
           this.updateCard(commentId,toCardId);
         },
-        updateComment(commentId,newName){
+        updateComment(commentId,newName,index){
           let token = localStorage.getItem('token');
          this.$axios.defaults.baseURL = this.$baseUrl;
           this.$axios.put('/comment/'+commentId+'?api_token='+token,{description:newName})
-          .then(()=>{
+          .then((response)=>{
             this.$toast.success('Comment Updated Successfully.', {
                   position: 'top-right'
                 });
                 this.updateId = null;
                 this.fetchBoardData();
+                this.comments.splice(index,1);
+                this.comments.push(response.data.comment);
                            this.listName= ''; 
                            this.editCommentId=null;
           }).catch((error)=>{
@@ -264,22 +266,23 @@ import Classic from '@ckeditor/ckeditor5-build-classic';
                 }); 
           });
         },
-        deleteComment(commentId){
+        deleteComment(commentId,index){
           let token = localStorage.getItem('token');
          this.$axios.defaults.baseURL = this.$baseUrl;
           this.$axios.delete('/comment/'+commentId+'?api_token='+token)
-          .then((response)=>{
+          .then(()=>{
+            this.comments.splice(index,1);
             this.$toast.success('Comment Deleted Successfully.', {
                   position: 'top-right'
                 });
-                let newComment = response.data.comment;
-                console.log('new Comment',newComment);
-                console.log('before Comments',this.comments);
-                this.cardComments.splice(commentId,1);
-                console.log('After Comments',this.comments);
+                //let newComment = response.data.comment;
+                // console.log('new Comment',newComment);
+                // console.log('before Comments',this.comments);
+                // this.cardComments.splice(commentId,1);
+                // console.log('After Comments',this.comments);
                 this.fetchBoardData();
                 
-                console.log('After fetch data Comments',this.comments);
+              //  console.log('After fetch data Comments',this.comments);
           }).catch((error)=>{
               this.$toast.error('some error happend.'+error, {
                   position: 'top-right'
